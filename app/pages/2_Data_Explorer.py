@@ -3,31 +3,51 @@
 import streamlit as st                     # I am using streamlit for UI
 import pandas as pd                        # I am using pandas to load and manage dataset
 import plotly.express as px                # I am using plotly for interactive charts
-import os                                  # I am using os for correct file path
+import os                                  # I am using os for file handling
+import gdown                               # I am using gdown to download large file from Google Drive
+
 
 st.title("Interactive Data Exploration Dashboard")   # Page title
 
+
 # -------------------------------------------------
-# Load Dataset
+# Google Drive File Configuration
 # -------------------------------------------------
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))  
-# I am getting project root folder
+FILE_ID = "1WvcuKXSXpN_oOGJlpqVNZyeEQ3PdqF-n"   # This is my Google Drive file ID
+DOWNLOAD_PATH = "temp_dataset.csv"             # I am saving downloaded file locally
 
-DATA_URL = "https://drive.google.com/uc?id=1WvcuKXSXpN_oOGJlpqVNZyeEQ3PdqF-n"
-# I am defining dataset path
 
-@st.cache_data                             # I am caching dataset to improve performance
+# -------------------------------------------------
+# Load Dataset (with gdown support)
+# -------------------------------------------------
+
+@st.cache_data
 def load_data():
-    df = pd.read_csv(DATA_URL)            # I am loading featured dataset
+
+    # I am checking if file already downloaded
+    if not os.path.exists(DOWNLOAD_PATH):
+
+        url = f"https://drive.google.com/uc?id={FILE_ID}"   # I am forming download URL
+
+        gdown.download(url, DOWNLOAD_PATH, quiet=False)     # I am downloading dataset
+
+    df = pd.read_csv(DOWNLOAD_PATH)                         # I am reading CSV file
     return df
 
-df = load_data()                           # I am calling dataset
+
+df = load_data()                                            # I am calling dataset
+
+
+# -------------------------------------------------
+# Dataset Overview
+# -------------------------------------------------
 
 st.subheader("Dataset Overview")
 
-st.write("Dataset Shape:", df.shape)       # I am showing dataset size
-st.dataframe(df.head())                    # I am showing first few records
+st.write("Dataset Shape:", df.shape)        # I am showing dataset size
+st.dataframe(df.head())                     # I am showing first few records
+
 
 # -------------------------------------------------
 # Filter Section
@@ -40,10 +60,9 @@ selected_scenario = st.sidebar.multiselect(
     options=df["emi_scenario"].unique(),
     default=df["emi_scenario"].unique()
 )
-# I am allowing user to filter by EMI type
 
 filtered_df = df[df["emi_scenario"].isin(selected_scenario)]
-# I am applying filter to dataset
+
 
 # -------------------------------------------------
 # EMI Scenario Distribution
@@ -52,9 +71,9 @@ filtered_df = df[df["emi_scenario"].isin(selected_scenario)]
 st.subheader("EMI Scenario Distribution")
 
 fig1 = px.histogram(filtered_df, x="emi_scenario", color="emi_scenario")
-# I am plotting EMI scenario distribution
 
 st.plotly_chart(fig1, use_container_width=True)
+
 
 # -------------------------------------------------
 # Eligibility Distribution
@@ -63,9 +82,9 @@ st.plotly_chart(fig1, use_container_width=True)
 st.subheader("Eligibility Distribution")
 
 fig2 = px.histogram(filtered_df, x="emi_eligibility", color="emi_eligibility")
-# I am plotting EMI eligibility class distribution
 
 st.plotly_chart(fig2, use_container_width=True)
+
 
 # -------------------------------------------------
 # Credit Score Distribution
@@ -74,9 +93,9 @@ st.plotly_chart(fig2, use_container_width=True)
 st.subheader("Credit Score Distribution")
 
 fig3 = px.histogram(filtered_df, x="credit_score", nbins=30)
-# I am plotting credit score distribution
 
 st.plotly_chart(fig3, use_container_width=True)
+
 
 # -------------------------------------------------
 # Salary vs Maximum EMI Relationship
@@ -84,13 +103,15 @@ st.plotly_chart(fig3, use_container_width=True)
 
 st.subheader("Salary vs Maximum EMI")
 
-fig4 = px.scatter(filtered_df,
-                  x="monthly_salary",
-                  y="max_monthly_emi",
-                  color="emi_eligibility")
-# I am analyzing relationship between salary and max EMI
+fig4 = px.scatter(
+    filtered_df,
+    x="monthly_salary",
+    y="max_monthly_emi",
+    color="emi_eligibility"
+)
 
 st.plotly_chart(fig4, use_container_width=True)
+
 
 # -------------------------------------------------
 # Correlation Heatmap
@@ -99,15 +120,14 @@ st.plotly_chart(fig4, use_container_width=True)
 st.subheader("Correlation Heatmap")
 
 numeric_df = filtered_df.select_dtypes(include=["int64", "float64"])
-# I am selecting only numeric columns
 
 correlation_matrix = numeric_df.corr()
-# I am computing correlation matrix
 
-fig5 = px.imshow(correlation_matrix,
-                 text_auto=True,
-                 aspect="auto",
-                 color_continuous_scale="RdBu_r")
-# I am creating heatmap for correlation
+fig5 = px.imshow(
+    correlation_matrix,
+    text_auto=True,
+    aspect="auto",
+    color_continuous_scale="RdBu_r"
+)
 
 st.plotly_chart(fig5, use_container_width=True)
