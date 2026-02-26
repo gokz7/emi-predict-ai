@@ -14,12 +14,12 @@ st.title("Interactive Data Exploration Dashboard")   # Page title
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))  
 # I am getting project root folder
 
-DATA_PATH = os.path.join(PROJECT_ROOT, "data", "featured_EMI_dataset.csv")  
+DATA_URL = "https://drive.google.com/uc?id=1WvcuKXSXpN_oOGJlpqVNZyeEQ3PdqF-n"
 # I am defining dataset path
 
 @st.cache_data                             # I am caching dataset to improve performance
 def load_data():
-    df = pd.read_csv(DATA_PATH)            # I am loading featured dataset
+    df = pd.read_csv(DATA_URL)            # I am loading featured dataset
     return df
 
 df = load_data()                           # I am calling dataset
